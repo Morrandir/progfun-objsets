@@ -62,6 +62,12 @@ class TweetSetSuite extends FunSuite {
     }
   }
 
+  test("union: with double empty sets") {
+    new TestSets {
+      assert(size(set1.union(set1)) === 0)
+    }
+  }
+
   test("descending: set5") {
     new TestSets {
       val trends = set5.descendingByRetweet
