@@ -61,7 +61,7 @@ abstract class TweetSet {
     this.unionHelperAcc(that.unionHelperAcc(new Empty))
   }
 
-  def unionHelperAcc(Acc: TweetSet): TweetSet
+  def unionHelperAcc(acc: TweetSet): TweetSet
 
   /**
    * Returns the tweet from this set which has the greatest retweet count.
@@ -72,7 +72,7 @@ abstract class TweetSet {
    * Question: Should we implment this method here, or should it remain abstract
    * and be implemented in the subclasses?
    */
-  def mostRetweeted: Tweet = ???
+  def mostRetweeted: Tweet
 
   /**
    * Returns a list containing all tweets of this set, sorted by retweet count
@@ -83,7 +83,17 @@ abstract class TweetSet {
    * Question: Should we implment this method here, or should it remain abstract
    * and be implemented in the subclasses?
    */
-  def descendingByRetweet: TweetList = ???
+  def descendingByRetweet: TweetList = {
+    def descendingByRetweetHelper(remains: TweetSet, acc: TweetList): TweetList = {
+      try {
+        val tempTweet = remains.mostRetweeted
+        new Cons(tempTweet, descendingByRetweetHelper(remains.remove(tempTweet), acc))
+      } catch {
+        case e: java.util.NoSuchElementException => acc
+      }
+    }
+    descendingByRetweetHelper(this, Nil)
+  }
 
 
   /**
@@ -118,7 +128,19 @@ class Empty extends TweetSet {
 
   def filterAcc(p: Tweet => Boolean, acc: TweetSet): TweetSet = acc
 
-  def unionHelperAcc(Acc: TweetSet): TweetSet = Acc
+  def unionHelperAcc(acc: TweetSet): TweetSet = acc
+
+
+  /**
+   * Returns the tweet from this set which has the greatest retweet count.
+   *
+   * Calling `mostRetweeted` on an empty set should throw an exception of
+   * type `java.util.NoSuchElementException`.
+   *
+   * Question: Should we implment this method here, or should it remain abstract
+   * and be implemented in the subclasses?
+   */
+  def mostRetweeted: Tweet = throw new java.util.NoSuchElementException
 
   /**
    * The following methods are already implemented
@@ -140,11 +162,30 @@ class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet {
     else this.right.filterAcc(p, this.left.filterAcc(p, acc))
   }
 
-  def unionHelperAcc(Acc: TweetSet): TweetSet = {
-    this.right.unionHelperAcc(this.left.unionHelperAcc(Acc.incl(this.elem)))
+  def unionHelperAcc(acc: TweetSet): TweetSet = {
+    this.right.unionHelperAcc(this.left.unionHelperAcc(acc.incl(this.elem)))
   }
 
 
+  /**
+   * Returns the tweet from this set which has the greatest retweet count.
+   *
+   * Calling `mostRetweeted` on an empty set should throw an exception of
+   * type `java.util.NoSuchElementException`.
+   *
+   * Question: Should we implment this method here, or should it remain abstract
+   * and be implemented in the subclasses?
+   */
+  def mostRetweeted: Tweet = {
+    val champion = this.elem
+
+    try {
+      val newSet = this.filter(tweet => tweet.retweets > this.elem.retweets)
+      newSet.mostRetweeted
+    } catch {
+      case e: java.util.NoSuchElementException => champion
+    }
+  }
 
   /**
    * The following methods are already implemented
